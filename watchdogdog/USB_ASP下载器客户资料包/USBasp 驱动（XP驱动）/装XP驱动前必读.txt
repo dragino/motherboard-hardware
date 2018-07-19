@@ -1,0 +1,1 @@
+我们推荐使用Proisp软件，想实际应用对比Proisp软件比AVR_fighter软件兼容性更好支且支持一些后缀带A或PA新版本的芯片，如果你的电脑装的是XP 系统且想用AVR_fighter软件的话请安装libusb_0.1.10.1内的驱动。

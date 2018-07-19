@@ -1,0 +1,103 @@
+//****************************************************************************
+// Use ATtiny13 as WatchDog
+//
+//****************************************************************************
+
+
+/*******************ATTINY13 IO Define****************************************
+PB0:LED
+PB1:KEY1
+PB2:KEY2
+PB3:ADC
+PB4:LED2
+PB5:RESET KEY
+*/////////////////////////////////////////////////////////////////////////////
+#include <iot13v.h>
+#include <macros.h>
+
+#define uchar  unsigned char 
+#define uint  unsigned int 
+uint i=0,count=0,state_reset=1;
+volatile uint state=1;
+
+
+
+/*微秒级延时程序*/
+void delay_us(int time)
+{     
+  	 do
+	 {
+		time--;
+	 }	
+  	 while (time>1);
+}	  
+
+/*毫秒级延时程序*/	 
+void delay_ms(unsigned int time)
+{
+	 while(time!=0)
+	 {		
+		  delay_us(200);
+		  time--;
+	 }
+}
+void port_init(void)
+{
+   
+   DDRB = 0xff;	     //将所有I/O口均初始化为输出状态
+   PORTB = 0xff;
+   DDRB&=0XFD;       //PCINT1设为输入
+   PORTB=0XFF;
+   GIMSK=0X20;
+   PCMSK=0X02;
+   SEI();
+
+}
+
+
+#pragma interrupt_handler PCINT1_INT:3
+void PCINT1_INT(void)
+{
+	//GIMSK=0X00;
+   //PCMSK=0X02;
+	state=0;
+}
+
+void main(void)
+{
+	 
+
+	 port_init();
+	 PORTB |= (1<<PB4); 
+	 delay_ms(200);  
+	 PORTB &= (0<<PB4);
+	 
+     while(1)
+     { 
+	 if(state == 1)
+	 {
+	      
+	    if(state_reset == 1)
+		{
+		   delay_ms(10000);
+		   delay_ms(30000);
+		   delay_ms(30000);  //Target 10 + 30 + 30 = 70 Second., Actually about 1'54"
+		   state_reset = 0;
+		}
+		
+		else
+		{
+		 PORTB|=(1<<PB4); 
+	     delay_ms(500);  
+	     PORTB&=(0<<PB4);
+		state_reset = 1;
+		//state = 1;
+		}
+		
+	 }
+	 state = 1;
+	 delay_ms(5000);
+	// GIMSK=0X20;
+		
+	  }
+ }

@@ -1,0 +1,265 @@
+Interrupt Vectors
+    00000 C00E      RJMP	__start|__text_start
+    00002 C053      RJMP	_PCINT1_INT
+
+Program Code (text area)
+__start|__text_start:
+    0000F E9CF      LDI	R28,0x9F
+    00010 E0D0      LDI	R29,0
+    00011 BFCD      OUT	0x3D,R28
+    00012 BFDE      OUT	0x3E,R29
+    00013 51CE      SUBI	R28,0x1E
+    00014 40D0      SBCI	R29,0
+    00015 EA0A      LDI	R16,0xAA
+    00016 8308      ST	Y,R16
+    00017 2400      CLR	R0
+    00018 E6EA      LDI	R30,0x6A
+    00019 E0F0      LDI	R31,0
+    0001A E010      LDI	R17,0
+    0001B 36EA      CPI	R30,0x6A
+    0001C 07F1      CPC	R31,R17
+    0001D F011      BEQ	0x0020
+    0001E 9201      ST	Z+,R0
+    0001F CFFB      RJMP	0x001B
+    00020 8300      ST	Z,R16
+    00021 E1E4      LDI	R30,0x14
+    00022 E0F0      LDI	R31,0
+    00023 E6A0      LDI	R26,0x60
+    00024 E0B0      LDI	R27,0
+    00025 E010      LDI	R17,0
+    00026 E000      LDI	R16,0
+    00027 BF0B      OUT	0x3B,R16
+    00028 31EE      CPI	R30,0x1E
+    00029 07F1      CPC	R31,R17
+    0002A F021      BEQ	0x002F
+    0002B 95C8      LPM
+    0002C 9631      ADIW	R30,1
+    0002D 920D      ST	X+,R0
+    0002E CFF9      RJMP	0x0028
+    0002F D039      RCALL	_main
+_exit:
+    00030 CFFF      RJMP	_exit
+FILE: D:\Projects\LibreRouter\Software\Watchdog\watchdog\watchdog\watchdog.c
+(0001) //****************************************************************************
+(0002) // Use ATtiny13 as WatchDog
+(0003) //
+(0004) //****************************************************************************
+(0005) 
+(0006) 
+(0007) /*******************ATTINY13 IO Define****************************************
+(0008) PB0:LED
+(0009) PB1:KEY1
+(0010) PB2:KEY2
+(0011) PB3:ADC
+(0012) PB4:LED2
+(0013) PB5:RESET KEY
+(0014) */////////////////////////////////////////////////////////////////////////////
+(0015) #include <iot13v.h>
+(0016) #include <macros.h>
+(0017) 
+(0018) #define uchar  unsigned char 
+(0019) #define uint  unsigned int 
+(0020) uint i=0,count=0,state_reset=1,number_of_second = 70;
+(0021) volatile uint state=1;
+(0022) 
+(0023) 
+(0024) 
+(0025) /*微秒级延时程序*/
+(0026) void delay_us(int time)
+(0027) {     
+(0028)   	 do
+(0029) 	 {
+(0030) 		time--;
+_delay_us:
+  time                 --> R16
+    00031 5001      SUBI	R16,1
+    00032 4010      SBCI	R17,0
+(0031) 	 }	
+(0032)   	 while (time>1);
+    00033 E081      LDI	R24,1
+    00034 E090      LDI	R25,0
+    00035 1780      CP	R24,R16
+    00036 0791      CPC	R25,R17
+    00037 F3CC      BLT	0x0031
+    00038 9508      RET
+_delay_ms:
+  time                 --> R20
+    00039 934A      ST	-Y,R20
+    0003A 935A      ST	-Y,R21
+    0003B 01A8      MOVW	R20,R16
+(0033) }	  
+(0034) 
+(0035) /*毫秒级延时程序*/	 
+(0036) void delay_ms(unsigned int time)
+(0037) {
+    0003C C005      RJMP	0x0042
+(0038) 	 while(time!=0)
+(0039) 	 {		
+(0040) 		  delay_us(200);
+    0003D EC08      LDI	R16,0xC8
+    0003E E010      LDI	R17,0
+    0003F DFF1      RCALL	_delay_us
+(0041) 		  time--;
+    00040 5041      SUBI	R20,1
+    00041 4050      SBCI	R21,0
+    00042 3040      CPI	R20,0
+    00043 0745      CPC	R20,R21
+    00044 F7C1      BNE	0x003D
+    00045 9159      LD	R21,Y+
+    00046 9149      LD	R20,Y+
+    00047 9508      RET
+(0042) 	 }
+(0043) }
+(0044) void port_init(void)
+(0045) {
+(0046)    
+(0047)    DDRB = 0xff;	     //将所有I/O口均初始化为输出状态
+_port_init:
+    00048 EF8F      LDI	R24,0xFF
+    00049 BB87      OUT	0x17,R24
+(0048)    PORTB = 0xff;
+    0004A BB88      OUT	0x18,R24
+(0049)    DDRB&=0XFD;       //PCINT1设为输入
+    0004B B387      IN	R24,0x17
+    0004C 7F8D      ANDI	R24,0xFD
+    0004D BB87      OUT	0x17,R24
+(0050)    PORTB=0XFF;
+    0004E EF8F      LDI	R24,0xFF
+    0004F BB88      OUT	0x18,R24
+(0051)    GIMSK=0X20;
+    00050 E280      LDI	R24,0x20
+    00051 BF8B      OUT	0x3B,R24
+(0052)    PCMSK=0X02;
+    00052 E082      LDI	R24,2
+    00053 BB85      OUT	0x15,R24
+(0053)    SEI();
+    00054 9478      BSET	7
+    00055 9508      RET
+_PCINT1_INT:
+    00056 922A      ST	-Y,R2
+    00057 923A      ST	-Y,R3
+    00058 B62F      IN	R2,0x3F
+    00059 922A      ST	-Y,R2
+(0054) 
+(0055) }
+(0056) 
+(0057) 
+(0058) #pragma interrupt_handler PCINT1_INT:3
+(0059) void PCINT1_INT(void)
+(0060) {
+(0061) 	//GIMSK=0X00;
+(0062)    //PCMSK=0X02;
+(0063) 	state=0;
+    0005A 2422      CLR	R2
+    0005B 2433      CLR	R3
+    0005C 9230 0069 STS	state+1,R3
+    0005E 9220 0068 STS	state,R2
+(0064) 	count=0;
+    00060 9230 0063 STS	count+1,R3
+    00062 9220 0062 STS	count,R2
+    00064 9029      LD	R2,Y+
+    00065 BE2F      OUT	0x3F,R2
+    00066 9039      LD	R3,Y+
+    00067 9029      LD	R2,Y+
+    00068 9518      RETI
+(0065) }
+(0066) 
+(0067) void main(void)
+(0068) {
+(0069) 	 
+(0070) 
+(0071) 	 port_init();
+_main:
+    00069 DFDE      RCALL	_port_init
+(0072) 	 PORTB |= (1<<PB4); 
+    0006A 9AC4      SBI	0x18,4
+(0073) 	 delay_ms(200);  
+    0006B EC08      LDI	R16,0xC8
+    0006C E010      LDI	R17,0
+    0006D DFCB      RCALL	_delay_ms
+(0074) 	 PORTB &= (0<<PB4);
+    0006E 2422      CLR	R2
+    0006F BA28      OUT	0x18,R2
+    00070 C04A      RJMP	0x00BB
+(0075) 	 
+(0076)      while(1)
+(0077)      { 
+(0078) 	 if(state == 1)
+    00071 9180 0068 LDS	R24,state
+    00073 9190 0069 LDS	R25,state+1
+    00075 3081      CPI	R24,1
+    00076 E0E0      LDI	R30,0
+    00077 079E      CPC	R25,R30
+    00078 F5C9      BNE	0x00B2
+(0079) 	 {
+(0080) 	      
+(0081) 	    if(state_reset == 1)
+    00079 9180 0064 LDS	R24,state_reset
+    0007B 9190 0065 LDS	R25,state_reset+1
+    0007D 3081      CPI	R24,1
+    0007E E0E0      LDI	R30,0
+    0007F 079E      CPC	R25,R30
+    00080 F529      BNE	0x00A6
+(0082) 		{
+(0083) 		   for(count = 0;count <= number_of_second; count++)
+    00081 2422      CLR	R2
+    00082 2433      CLR	R3
+    00083 9230 0063 STS	count+1,R3
+    00085 9220 0062 STS	count,R2
+    00087 C00C      RJMP	0x0094
+(0084) 		   delay_ms(1000);  //Target 10 + 30 + 30 = 70 Second., Actually about 1'54"
+    00088 EE08      LDI	R16,0xE8
+    00089 E013      LDI	R17,3
+    0008A DFAE      RCALL	_delay_ms
+    0008B 9180 0062 LDS	R24,count
+    0008D 9190 0063 LDS	R25,count+1
+    0008F 9601      ADIW	R24,1
+    00090 9390 0063 STS	count+1,R25
+    00092 9380 0062 STS	count,R24
+    00094 9020 0066 LDS	R2,number_of_second
+    00096 9030 0067 LDS	R3,number_of_second+1
+    00098 9040 0062 LDS	R4,count
+    0009A 9050 0063 LDS	R5,count+1
+    0009C 1424      CP	R2,R4
+    0009D 0435      CPC	R3,R5
+    0009E F748      BCC	0x0088
+(0085) 		   state_reset = 0;
+    0009F 2422      CLR	R2
+    000A0 2433      CLR	R3
+    000A1 9230 0065 STS	state_reset+1,R3
+    000A3 9220 0064 STS	state_reset,R2
+(0086) 		}
+    000A5 C00C      RJMP	0x00B2
+(0087) 		
+(0088) 		else
+(0089) 		{
+(0090) 		 PORTB|=(1<<PB4); 
+    000A6 9AC4      SBI	0x18,4
+(0091) 	     delay_ms(500);  
+    000A7 EF04      LDI	R16,0xF4
+    000A8 E011      LDI	R17,1
+    000A9 DF8F      RCALL	_delay_ms
+(0092) 	     PORTB&=(0<<PB4);
+    000AA 2422      CLR	R2
+    000AB BA28      OUT	0x18,R2
+(0093) 		state_reset = 1;
+    000AC E081      LDI	R24,1
+    000AD E090      LDI	R25,0
+    000AE 9390 0065 STS	state_reset+1,R25
+    000B0 9380 0064 STS	state_reset,R24
+(0094) 		//state = 1;
+(0095) 		}
+(0096) 		
+(0097) 	 }
+(0098) 	 state = 1;
+    000B2 E081      LDI	R24,1
+    000B3 E090      LDI	R25,0
+    000B4 9390 0069 STS	state+1,R25
+    000B6 9380 0068 STS	state,R24
+(0099) 	 delay_ms(5000);
+FILE: <library>
+    000B8 E808      LDI	R16,0x88
+    000B9 E113      LDI	R17,0x13
+    000BA DF7E      RCALL	_delay_ms
+    000BB CFB5      RJMP	0x0071
+    000BC 9508      RET

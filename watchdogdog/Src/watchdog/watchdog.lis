@@ -1,0 +1,378 @@
+                        .module watchdog.c
+                        .area text(rom, con, rel)
+ 0000                   .dbfile watchdog.c
+                        .area data(ram, con, rel)
+ 0000                   .dbfile watchdog.c
+ 0000           _i::
+ 0000                   .blkb 2
+                        .area idata
+ 0000 0000              .word 0
+                        .area data(ram, con, rel)
+ 0002                   .dbfile watchdog.c
+ 0002                   .dbfile D:\Projects\LibreRouter\Software\Watchdog\watchdog\watchdog\watchdog.c
+ 0002                   .dbsym e i _i i
+ 0002           _count::
+ 0002                   .blkb 2
+                        .area idata
+ 0002 0000              .word 0
+                        .area data(ram, con, rel)
+ 0004                   .dbfile D:\Projects\LibreRouter\Software\Watchdog\watchdog\watchdog\watchdog.c
+ 0004                   .dbsym e count _count i
+ 0004           _state_reset::
+ 0004                   .blkb 2
+                        .area idata
+ 0004 0100              .word 1
+                        .area data(ram, con, rel)
+ 0006                   .dbfile D:\Projects\LibreRouter\Software\Watchdog\watchdog\watchdog\watchdog.c
+ 0006                   .dbsym e state_reset _state_reset i
+ 0006           _number_of_second::
+ 0006                   .blkb 2
+                        .area idata
+ 0006 4600              .word 70
+                        .area data(ram, con, rel)
+ 0008                   .dbfile D:\Projects\LibreRouter\Software\Watchdog\watchdog\watchdog\watchdog.c
+ 0008                   .dbsym e number_of_second _number_of_second i
+ 0008           _state::
+ 0008                   .blkb 2
+                        .area idata
+ 0008 0100              .word 1
+                        .area data(ram, con, rel)
+ 000A                   .dbfile D:\Projects\LibreRouter\Software\Watchdog\watchdog\watchdog\watchdog.c
+ 000A                   .dbsym e state _state i
+                        .area text(rom, con, rel)
+ 0000                   .dbfile D:\Projects\LibreRouter\Software\Watchdog\watchdog\watchdog\watchdog.c
+ 0000                   .dbfunc e delay_us _delay_us fV
+ 0000           ;           time -> R16,R17
+                        .even
+ 0000           _delay_us::
+ 0000                   .dbline -1
+ 0000                   .dbline 27
+ 0000           ; //****************************************************************************
+ 0000           ; // Use ATtiny13 as WatchDog
+ 0000           ; //
+ 0000           ; //****************************************************************************
+ 0000           ; 
+ 0000           ; 
+ 0000           ; /*******************ATTINY13 IO Define****************************************
+ 0000           ; PB0:LED
+ 0000           ; PB1:KEY1
+ 0000           ; PB2:KEY2
+ 0000           ; PB3:ADC
+ 0000           ; PB4:LED2
+ 0000           ; PB5:RESET KEY
+ 0000           ; */////////////////////////////////////////////////////////////////////////////
+ 0000           ; #include <iot13v.h>
+ 0000           ; #include <macros.h>
+ 0000           ; 
+ 0000           ; #define uchar  unsigned char 
+ 0000           ; #define uint  unsigned int 
+ 0000           ; uint i=0,count=0,state_reset=1,number_of_second = 70;
+ 0000           ; volatile uint state=1;
+ 0000           ; 
+ 0000           ; 
+ 0000           ; 
+ 0000           ; /*微秒级延时程序*/
+ 0000           ; void delay_us(int time)
+ 0000           ; {     
+ 0000           L2:
+ 0000                   .dbline 29
+ 0000           ;        do
+ 0000           ;        {
+ 0000                   .dbline 30
+ 0000           ;               time--;
+ 0000 0150              subi R16,1
+ 0002 1040              sbci R17,0
+ 0004                   .dbline 31
+ 0004           ;        }      
+ 0004           L3:
+ 0004                   .dbline 32
+ 0004           ;        while (time>1);
+ 0004 81E0              ldi R24,1
+ 0006 90E0              ldi R25,0
+ 0008 8017              cp R24,R16
+ 000A 9107              cpc R25,R17
+ 000C CCF3              brlt L2
+ 000E           X0:
+ 000E                   .dbline -2
+ 000E           L1:
+ 000E                   .dbline 0 ; func end
+ 000E 0895              ret
+ 0010                   .dbsym r time 16 I
+ 0010                   .dbend
+ 0010                   .dbfunc e delay_ms _delay_ms fV
+ 0010           ;           time -> R20,R21
+                        .even
+ 0010           _delay_ms::
+ 0010 4A93              st -y,R20
+ 0012 5A93              st -y,R21
+ 0014 A801              movw R20,R16
+ 0016                   .dbline -1
+ 0016                   .dbline 37
+ 0016           ; }       
+ 0016           ; 
+ 0016           ; /*毫秒级延时程序*/     
+ 0016           ; void delay_ms(unsigned int time)
+ 0016           ; {
+ 0016 05C0              rjmp L7
+ 0018           L6:
+ 0018                   .dbline 39
+ 0018           ;        while(time!=0)
+ 0018           ;        {              
+ 0018                   .dbline 40
+ 0018           ;                 delay_us(200);
+ 0018 08EC              ldi R16,200
+ 001A 10E0              ldi R17,0
+ 001C F1DF              rcall _delay_us
+ 001E                   .dbline 41
+ 001E           ;                 time--;
+ 001E 4150              subi R20,1
+ 0020 5040              sbci R21,0
+ 0022                   .dbline 42
+ 0022           ;        }
+ 0022           L7:
+ 0022                   .dbline 38
+ 0022 4030              cpi R20,0
+ 0024 4507              cpc R20,R21
+ 0026 C1F7              brne L6
+ 0028           X1:
+ 0028                   .dbline -2
+ 0028           L5:
+ 0028                   .dbline 0 ; func end
+ 0028 5991              ld R21,y+
+ 002A 4991              ld R20,y+
+ 002C 0895              ret
+ 002E                   .dbsym r time 20 i
+ 002E                   .dbend
+ 002E                   .dbfunc e port_init _port_init fV
+                        .even
+ 002E           _port_init::
+ 002E                   .dbline -1
+ 002E                   .dbline 45
+ 002E           ; }
+ 002E           ; void port_init(void)
+ 002E           ; {
+ 002E                   .dbline 47
+ 002E           ;    
+ 002E           ;    DDRB = 0xff;            //将所有I/O口均初始化为输出状态
+ 002E 8FEF              ldi R24,255
+ 0030 87BB              out 0x17,R24
+ 0032                   .dbline 48
+ 0032           ;    PORTB = 0xff;
+ 0032 88BB              out 0x18,R24
+ 0034                   .dbline 49
+ 0034           ;    DDRB&=0XFD;       //PCINT1设为输入
+ 0034 87B3              in R24,0x17
+ 0036 8D7F              andi R24,253
+ 0038 87BB              out 0x17,R24
+ 003A                   .dbline 50
+ 003A           ;    PORTB=0XFF;
+ 003A 8FEF              ldi R24,255
+ 003C 88BB              out 0x18,R24
+ 003E                   .dbline 51
+ 003E           ;    GIMSK=0X20;
+ 003E 80E2              ldi R24,32
+ 0040 8BBF              out 0x3b,R24
+ 0042                   .dbline 52
+ 0042           ;    PCMSK=0X02;
+ 0042 82E0              ldi R24,2
+ 0044 85BB              out 0x15,R24
+ 0046                   .dbline 53
+ 0046           ;    SEI();
+ 0046 7894              sei
+ 0048                   .dbline -2
+ 0048           L9:
+ 0048                   .dbline 0 ; func end
+ 0048 0895              ret
+ 004A                   .dbend
+                        .area vector(rom, abs)
+                        .org 4
+ 0004 25C0              rjmp _PCINT1_INT
+                        .area text(rom, con, rel)
+ 004A                   .dbfile D:\Projects\LibreRouter\Software\Watchdog\watchdog\watchdog\watchdog.c
+ 004A                   .dbfunc e PCINT1_INT _PCINT1_INT fV
+                        .even
+ 004A           _PCINT1_INT::
+ 004A 2A92              st -y,R2
+ 004C 3A92              st -y,R3
+ 004E 2FB6              IN R2,63
+ 0050 2A92              st -y,R2
+ 0052                   .dbline -1
+ 0052                   .dbline 60
+ 0052           ; 
+ 0052           ; }
+ 0052           ; 
+ 0052           ; 
+ 0052           ; #pragma interrupt_handler PCINT1_INT:3
+ 0052           ; void PCINT1_INT(void)
+ 0052           ; {
+ 0052                   .dbline 63
+ 0052           ;       //GIMSK=0X00;
+ 0052           ;    //PCMSK=0X02;
+ 0052           ;       state=0;
+ 0052 2224              clr R2
+ 0054 3324              clr R3
+ 0056 30920900          sts _state+1,R3
+ 005A 20920800          sts _state,R2
+ 005E                   .dbline 64
+ 005E           ;       count=0;
+ 005E 30920300          sts _count+1,R3
+ 0062 20920200          sts _count,R2
+ 0066                   .dbline -2
+ 0066           L10:
+ 0066                   .dbline 0 ; func end
+ 0066 2990              ld R2,y+
+ 0068 2FBE              OUT 63,R2
+ 006A 3990              ld R3,y+
+ 006C 2990              ld R2,y+
+ 006E 1895              reti
+ 0070                   .dbend
+ 0070                   .dbfunc e main _main fV
+                        .even
+ 0070           _main::
+ 0070                   .dbline -1
+ 0070                   .dbline 68
+ 0070           ; }
+ 0070           ; 
+ 0070           ; void main(void)
+ 0070           ; {
+ 0070                   .dbline 71
+ 0070           ;        
+ 0070           ; 
+ 0070           ;        port_init();
+ 0070 DEDF              rcall _port_init
+ 0072                   .dbline 72
+ 0072           ;        PORTB |= (1<<PB4); 
+ 0072 C49A              sbi 0x18,4
+ 0074                   .dbline 73
+ 0074           ;        delay_ms(200);  
+ 0074 08EC              ldi R16,200
+ 0076 10E0              ldi R17,0
+ 0078 CBDF              rcall _delay_ms
+ 007A                   .dbline 74
+ 007A           ;        PORTB &= (0<<PB4);
+ 007A 2224              clr R2
+ 007C 28BA              out 0x18,R2
+ 007E 4AC0              rjmp L13
+ 0080           L12:
+ 0080                   .dbline 77
+ 0080           ;        
+ 0080           ;      while(1)
+ 0080           ;      { 
+ 0080                   .dbline 78
+ 0080           ;        if(state == 1)
+ 0080 80910800          lds R24,_state
+ 0084 90910900          lds R25,_state+1
+ 0088 8130              cpi R24,1
+ 008A E0E0              ldi R30,0
+ 008C 9E07              cpc R25,R30
+ 008E C9F5              brne L15
+ 0090           X2:
+ 0090                   .dbline 79
+ 0090           ;        {
+ 0090                   .dbline 81
+ 0090           ;             
+ 0090           ;           if(state_reset == 1)
+ 0090 80910400          lds R24,_state_reset
+ 0094 90910500          lds R25,_state_reset+1
+ 0098 8130              cpi R24,1
+ 009A E0E0              ldi R30,0
+ 009C 9E07              cpc R25,R30
+ 009E 29F5              brne L17
+ 00A0           X3:
+ 00A0                   .dbline 82
+ 00A0           ;               {
+ 00A0                   .dbline 83
+ 00A0           ;                  for(count = 0;count <= number_of_second; count++)
+ 00A0 2224              clr R2
+ 00A2 3324              clr R3
+ 00A4 30920300          sts _count+1,R3
+ 00A8 20920200          sts _count,R2
+ 00AC 0CC0              rjmp L22
+ 00AE           L19:
+ 00AE                   .dbline 84
+ 00AE           ;                  delay_ms(1000);  //Target 10 + 30 + 30 = 70 Second., Actually about 1'54"
+ 00AE 08EE              ldi R16,1000
+ 00B0 13E0              ldi R17,3
+ 00B2 AEDF              rcall _delay_ms
+ 00B4           L20:
+ 00B4                   .dbline 83
+ 00B4 80910200          lds R24,_count
+ 00B8 90910300          lds R25,_count+1
+ 00BC 0196              adiw R24,1
+ 00BE 90930300          sts _count+1,R25
+ 00C2 80930200          sts _count,R24
+ 00C6           L22:
+ 00C6                   .dbline 83
+ 00C6 20900600          lds R2,_number_of_second
+ 00CA 30900700          lds R3,_number_of_second+1
+ 00CE 40900200          lds R4,_count
+ 00D2 50900300          lds R5,_count+1
+ 00D6 2414              cp R2,R4
+ 00D8 3504              cpc R3,R5
+ 00DA 48F7              brsh L19
+ 00DC           X4:
+ 00DC                   .dbline 85
+ 00DC           ;                  state_reset = 0;
+ 00DC 2224              clr R2
+ 00DE 3324              clr R3
+ 00E0 30920500          sts _state_reset+1,R3
+ 00E4 20920400          sts _state_reset,R2
+ 00E8                   .dbline 86
+ 00E8           ;               }
+ 00E8 0CC0              rjmp L18
+ 00EA           L17:
+ 00EA                   .dbline 89
+ 00EA           ;               
+ 00EA           ;               else
+ 00EA           ;               {
+ 00EA                   .dbline 90
+ 00EA           ;                PORTB|=(1<<PB4); 
+ 00EA C49A              sbi 0x18,4
+ 00EC                   .dbline 91
+ 00EC           ;            delay_ms(500);  
+ 00EC 04EF              ldi R16,500
+ 00EE 11E0              ldi R17,1
+ 00F0 8FDF              rcall _delay_ms
+ 00F2                   .dbline 92
+ 00F2           ;            PORTB&=(0<<PB4);
+ 00F2 2224              clr R2
+ 00F4 28BA              out 0x18,R2
+ 00F6                   .dbline 93
+ 00F6           ;               state_reset = 1;
+ 00F6 81E0              ldi R24,1
+ 00F8 90E0              ldi R25,0
+ 00FA 90930500          sts _state_reset+1,R25
+ 00FE 80930400          sts _state_reset,R24
+ 0102                   .dbline 95
+ 0102           ;               //state = 1;
+ 0102           ;               }
+ 0102           L18:
+ 0102                   .dbline 97
+ 0102           ;               
+ 0102           ;        }
+ 0102           L15:
+ 0102                   .dbline 98
+ 0102           ;        state = 1;
+ 0102 81E0              ldi R24,1
+ 0104 90E0              ldi R25,0
+ 0106 90930900          sts _state+1,R25
+ 010A 80930800          sts _state,R24
+ 010E                   .dbline 99
+ 010E           ;        delay_ms(5000);
+ 010E 08E8              ldi R16,5000
+ 0110 13E1              ldi R17,19
+ 0112 7EDF              rcall _delay_ms
+ 0114                   .dbline 102
+ 0114           ;       // GIMSK=0X20;
+ 0114           ;               
+ 0114           ;         }
+ 0114           L13:
+ 0114                   .dbline 76
+ 0114 B5CF              rjmp L12
+ 0116           X5:
+ 0116                   .dbline -2
+ 0116           L11:
+ 0116                   .dbline 0 ; func end
+ 0116 0895              ret
+ 0118                   .dbend
+ 0118           ;  }
